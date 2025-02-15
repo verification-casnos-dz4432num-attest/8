@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vérification</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+</head>
+<body>
+    <h1 id="titre">Vérification des informations</h1>
+    <div id="infos" style="display: none;">
+        <p><strong>Matricule :</strong> <span id="matricule"></span></p>
+        <p><strong>N° attestation :</strong> <span id="num_attest"></span></p>
+        <p><strong>Nom :</strong> <span id="nom"></span></p>
+        <p><strong>Prénom :</strong> <span id="prenom"></span></p>
+        <p><strong>Date de naissance :</strong> <span id="date_naissance"></span></p>
+        <p><strong>Date mise à jour :</strong> <span id="date_maj"></span></p>
+        <p><strong>Date d'annulation :</strong> <span id="date_annulation"></span></p>
+    </div>
+
+    <script>
+        const cleSecrete = "lila"; // La clé pour déchiffrer
+
+        function dechiffrerAES(texteChiffre) {
+            try {
+                return CryptoJS.AES.decrypt(texteChiffre, cleSecrete).toString(CryptoJS.enc.Utf8);
+            } catch {
+                return null;
+            }
+        }
+
+        function decoderInfos() {
+            const params = new URLSearchParams(window.location.search);
+            let data = params.get("data");
+
+            if (data) {
+                let decoded = dechiffrerAES(data);
+                if (!decoded) {
+                    document.body.innerHTML = "<h1>Non validé</h1>";
+                    return;
+                }
+
+                let [matricule, num_attest, nom, prenom, date_naissance, date_maj, date_annulation] = decoded.split("|");
+
+                // Vérifier si le client est dans la liste noire
+                let listeNoire = localStorage.getItem("listeNoire") || "";
+                if (listeNoire.includes(matricule)) {
+                    document.body.innerHTML = "<h1>Non validé</h1>";
+                    return;
+                }
+
+                document.getElementById("matricule").textContent = matricule || "Non défini";
+                document.getElementById("num_attest").textContent = num_attest || "Non défini";
+                document.getElementById("nom").textContent = nom || "Non défini";
+                document.getElementById("prenom").textContent = prenom || "Non défini";
+                document.getElementById("date_naissance").textContent = date_naissance || "Non défini";
+                document.getElementById("date_maj").textContent = date_maj || "Non défini";
+                document.getElementById("date_annulation").textContent = date_annulation || "Non défini";
+
+                document.getElementById("titre").textContent = "Informations valides";
+                document.getElementById("infos").style.display = "block";
+            }
+        }
+        decoderInfos();
+    </script>
+</body>
+</html>
+
